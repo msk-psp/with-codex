@@ -13,6 +13,7 @@ export type CardMetrics = {
   glareScore: number;
   cardCoverage: number;
   cardAspect: number;
+  cardBox: { x: number; y: number; w: number; h: number };
   borderIssues: BorderIssue[];
 };
 

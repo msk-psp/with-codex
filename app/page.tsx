@@ -73,7 +73,14 @@ function detectCardBounds(data: Uint8ClampedArray, width: number, height: number
   }
 
   if (pixels < 1500) {
-    return { minX: 0, minY: 0, maxX: width, maxY: height, coverage: 0.2, aspect: width / height };
+    return {
+      minX: Math.round(width * 0.2),
+      minY: Math.round(height * 0.15),
+      maxX: Math.round(width * 0.8),
+      maxY: Math.round(height * 0.92),
+      coverage: 0.2,
+      aspect: 0.714
+    };
   }
 
   const cardW = Math.max(1, maxX - minX);
@@ -141,6 +148,7 @@ async function getImageMetrics(file: File): Promise<CardMetrics> {
       glareScore: 0.03,
       cardCoverage: 0.2,
       cardAspect: bitmap.width / bitmap.height,
+      cardBox: { x: 20, y: 15, w: 60, h: 77 },
       borderIssues: []
     };
   }
@@ -180,6 +188,12 @@ async function getImageMetrics(file: File): Promise<CardMetrics> {
     glareScore,
     cardCoverage: bounds.coverage,
     cardAspect: bounds.aspect,
+    cardBox: {
+      x: (bounds.minX / canvas.width) * 100,
+      y: (bounds.minY / canvas.height) * 100,
+      w: ((bounds.maxX - bounds.minX) / canvas.width) * 100,
+      h: ((bounds.maxY - bounds.minY) / canvas.height) * 100
+    },
     borderIssues
   };
 }
@@ -273,11 +287,26 @@ export default function HomePage() {
                 <div className="preview">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={card.url} alt={card.file.name} />
+                  <div
+                    className="card-outline"
+                    style={{
+                      left: `${card.metrics.cardBox.x}%`,
+                      top: `${card.metrics.cardBox.y}%`,
+                      width: `${card.metrics.cardBox.w}%`,
+                      height: `${card.metrics.cardBox.h}%`
+                    }}
+                    title="Detected card bounds"
+                  />
                   {card.result.defects.map((d) => (
                     <div
                       key={`${d.label}-${d.x}-${d.y}`}
                       className="defect"
-                      style={{ left: `${d.x}%`, top: `${d.y}%`, width: `${d.w}%`, height: `${d.h}%` }}
+                      style={{
+                        left: `${card.metrics.cardBox.x + (d.x / 100) * card.metrics.cardBox.w}%`,
+                        top: `${card.metrics.cardBox.y + (d.y / 100) * card.metrics.cardBox.h}%`,
+                        width: `${(d.w / 100) * card.metrics.cardBox.w}%`,
+                        height: `${(d.h / 100) * card.metrics.cardBox.h}%`
+                      }}
                       title={d.label}
                     />
                   ))}
